@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartCanteen</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Instrument+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--paper:#f6f8f7;--ink:#12201d;--teal:#0e5a52;--deep:#093d37;--mint:#dcefe9;--amber:#f2a93b;--line:#dde7e3;--mute:#5f726d;--gap:16px}
+*{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'Instrument Sans',system-ui,sans-serif;color:var(--ink);background:var(--paper);min-height:100vh;line-height:1.45}
+h1,h2,h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+button{font:inherit;cursor:pointer}:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.hide{display:none!important}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes pop{from{transform:scale(.5) rotate(-25deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes rise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}@keyframes slide{to{transform:translateX(-50%)}}
+@keyframes bob{50%{transform:translateY(-6px)}}@keyframes scan{0%,100%{top:8%}50%{top:88%}}@keyframes fade{from{opacity:0}}
+
+/* photos */
+.ph,.dish,.plate,.sat,.fl{position:relative;overflow:hidden;display:grid;place-items:center;background:linear-gradient(135deg,#cfe8e0,#eef7f4)}
+.ph img,.dish img,.plate img,.sat img,.fl img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.ini{font:700 1.3rem 'Bricolage Grotesque',system-ui,sans-serif;color:var(--teal);letter-spacing:.06em;opacity:.8}
+
+/* login */
+#login{min-height:100vh;display:grid;grid-template-columns:1.15fr 1fr}
+.hero{background:radial-gradient(circle at 50% 40%,#146b61,var(--deep) 70%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:12px;padding:40px 0 0;overflow:hidden;min-width:0}
+.hero h1{font-size:clamp(1.6rem,3vw,2.4rem);text-align:center;padding:0 28px;max-width:20ch}
+.showcase{display:flex;flex-direction:column;align-items:center;gap:36px}
+.stage{position:relative;width:340px;height:340px;margin:28px 0 0}
+.stage:before{content:"";position:absolute;inset:0;border:1px dashed rgba(255,255,255,.3);border-radius:50%}
+.arm{position:absolute;inset:0;animation:spin 30s linear infinite;animation-delay:var(--dl)}
+.sat{position:absolute;top:-24px;left:50%;margin-left:-24px;width:48px;height:48px;border-radius:50%;box-shadow:0 8px 20px rgba(0,0,0,.25);animation:spin 30s linear infinite reverse;animation-delay:var(--dl);border:2px solid #fff}
+.plate{position:absolute;inset:60px;border-radius:50%;box-shadow:0 0 0 12px rgba(255,255,255,.12),0 24px 50px rgba(0,0,0,.35);border:4px solid #fff}
+.plate .ini{font-size:3.4rem;animation:pop .6s cubic-bezier(.2,1.3,.4,1)}.plate img{animation:pop .6s}
+.dn{text-align:center;min-height:60px;padding:0 20px}.dn b{display:block;font:700 1.4rem 'Bricolage Grotesque',system-ui,sans-serif}.dn small{display:block;opacity:.8;margin-top:4px}
+.float-field{--n:2;--g:14px;flex:1;width:100%;min-height:430px;padding:14px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.float-field .row{flex:1;min-height:0;overflow:hidden;border-radius:22px}
+.float-field .track{display:flex;gap:var(--g);height:100%;will-change:transform}
+.fl{position:relative;flex:0 0 calc((100% - (var(--n) - 1)*var(--g))/var(--n));min-height:0;border-radius:22px;border:2px solid rgba(255,255,255,.85)}
+.fl .ini{font-size:2.6rem}
+.fl video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.fl small{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:26px 10px 10px;text-align:center;font:500 .9rem 'Instrument Sans',system-ui,sans-serif;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.fl small b{font-weight:700}
+.tick{width:100%;overflow:hidden;background:rgba(0,0,0,.2);padding:13px 0}
+.tick div{display:flex;width:max-content;animation:slide 26s linear infinite;font-size:.9rem;white-space:nowrap}
+.tick span{padding:0 22px;opacity:.9}.tick span+span{border-left:1px solid rgba(255,255,255,.25)}
+.form{display:grid;place-content:center;padding:40px;background:#fff}.form form{width:min(360px,100%)}
+.logo{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,var(--teal),#2a9d8f);color:#fff;font:700 1.05rem 'Bricolage Grotesque',system-ui,sans-serif;margin-bottom:18px;box-shadow:0 10px 24px rgba(14,90,82,.3)}
+.form h2{font-size:1.6rem}.form .sub{margin:6px 0 4px}
+label{display:block;font-size:.85rem;margin:16px 0 6px;color:var(--mute)}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+input,select{height:48px}input[type=file]{height:48px;padding:10px 12px}
+input:focus,select:focus{outline:0;border-color:var(--teal);box-shadow:0 0 0 4px rgba(14,90,82,.12)}
+.btn{background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:700;transition:transform .15s,background .2s;line-height:1.2}
+.btn:hover{background:var(--deep)}.btn:active{transform:scale(.96)}.btn:disabled{background:#b9c7c3;cursor:not-allowed}
+.btn.go{height:48px;padding:0 22px}
+.btn.ghost{background:#fff;color:var(--teal);border:1px solid var(--teal)}.btn.ghost:hover{background:var(--mint)}.btn.full{width:100%;margin-top:18px}
+.hint{font-size:.8rem;color:var(--mute);margin-top:16px;line-height:1.7;padding:12px 14px;background:var(--paper);border-radius:10px}.err{color:#b3261e;font-size:.85rem;margin-top:10px;min-height:1.2em}
+
+/* app shell */
+#app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh;align-items:start}
+aside{background:var(--deep);color:#fff;padding:24px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:0 10px 20px;font:700 1.15rem 'Bricolage Grotesque',system-ui,sans-serif;white-space:nowrap}
+.brand .logo{flex:none;width:36px;height:36px;border-radius:10px;font-size:.85rem;margin:0;box-shadow:none;background:linear-gradient(135deg,var(--amber),#f7c873);color:var(--deep)}
+aside button{background:none;border:0;color:#bcd6d0;text-align:left;padding:11px 12px;border-radius:10px;transition:all .2s;width:100%}
+aside button:hover{background:rgba(255,255,255,.08);padding-left:18px}aside button.on{background:#fff;color:var(--teal);font-weight:700;padding-left:12px}
+.me{margin-top:auto;padding:12px;font-size:.78rem;color:#8fb3ab;line-height:1.5;border-top:1px solid rgba(255,255,255,.12)}.me b{display:block;color:#fff;font-size:.9rem}
+#out{border:1px solid rgba(255,255,255,.25);text-align:center;margin-top:6px}#out:hover{padding-left:12px}
+main{padding:32px 36px 56px;max-width:1120px;width:100%;margin:0 auto;min-width:0}
+.pagehead{margin-bottom:22px}.pagehead h1{font-size:1.9rem}.pagehead .sub{margin:6px 0 0}
+.sub{color:var(--mute);margin:4px 0 16px}
+
+/* cards + grids */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--gap);align-items:stretch}.grid>*{animation:rise .5s both;animation-delay:calc(var(--n,0)*70ms)}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;transition:transform .25s,box-shadow .25s;min-width:0}
+.grid>.card:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(14,90,82,.12)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);margin-top:var(--gap);align-items:stretch}.cols h3{margin-bottom:12px}
+.stat{display:flex;flex-direction:column;gap:6px}.stat b{display:block;font:700 2rem 'Bricolage Grotesque',system-ui,sans-serif;color:var(--teal);line-height:1.1}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}.cardhead .sub{margin:0}
+
+/* food cards */
+.food{display:flex;flex-direction:column;gap:10px}
+.food .ph{aspect-ratio:4/3;border-radius:12px}
+.food .tags{display:flex;gap:6px;flex-wrap:wrap}
+.food h3{font-size:1.15rem}
+.facts{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.85rem;color:var(--mute)}.facts b{color:var(--ink)}
+.buy{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:6px}
+.price{font:700 1.45rem 'Bricolage Grotesque',system-ui,sans-serif;color:var(--teal)}
+.tag{display:inline-block;background:var(--mint);color:var(--teal);border-radius:99px;padding:2px 10px;font-size:.75rem;font-weight:500;line-height:1.6}.tag.am{background:#fdf0d8;color:#8a5a00}
+.dish{width:76px;height:76px;border-radius:50%;flex:none;animation:bob 4s ease-in-out infinite}.dish .ini{font-size:1.1rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}.row:last-child{border:0}.row:first-child{padding-top:2px}
+.row>span:last-child{flex:none}
+.who{display:flex;align-items:center;gap:12px;min-width:0}.who .dish{width:52px;height:52px;animation:none}
+.bar{height:10px;background:var(--mint);border-radius:99px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2a9d8f,var(--teal));transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.pickbar{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}.pickbar>div{flex:1;min-width:220px;max-width:420px}.pickbar label{margin-top:0}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:4px 14px;align-items:end}.fgrid label{margin:12px 0 6px}.fgrid .wide{grid-column:span 2}.fgrid .go{align-self:end}
+.stars{display:flex;gap:2px}.stars button{background:none;border:0;font-size:1.8rem;color:var(--line);transition:transform .15s;line-height:1}.stars button:hover{transform:scale(1.25)}.stars button.on{color:var(--amber)}
+.chart{width:100%;height:170px;display:block}.draw{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.6s ease}.draw.on{stroke-dashoffset:0}
+.vb{display:flex;align-items:end;gap:8px;height:170px}
+.vb div{flex:1;text-align:center;font-size:.75rem;color:var(--mute);display:flex;flex-direction:column;justify-content:end;height:100%;gap:6px}.vb i{display:block;height:0;background:var(--teal);border-radius:8px 8px 0 0;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+
+/* scanner */
+.scanwrap{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:24px;align-items:start}
+.scanwrap .btn.full{margin-top:0}
+.scanner{position:relative;width:100%;aspect-ratio:1;border-radius:20px;background:#0b2623;overflow:hidden;margin-bottom:14px}
+.scanner video{width:100%;height:100%;object-fit:cover;display:block}.scanner:after{content:"";position:absolute;left:8%;right:8%;top:8%;height:3px;background:var(--amber);box-shadow:0 0 18px var(--amber);animation:scan 2.4s ease-in-out infinite}
+.scanner i{position:absolute;width:42px;height:42px;border:4px solid #fff;transition:border-color .3s}.scanner.hit i{border-color:#4ade80}
+.scanner i:nth-child(2){top:14px;left:14px;border-right:0;border-bottom:0}.scanner i:nth-child(3){top:14px;right:14px;border-left:0;border-bottom:0}
+.scanner i:nth-child(4){bottom:14px;left:14px;border-right:0;border-top:0}.scanner i:nth-child(5){bottom:14px;right:14px;border-left:0;border-top:0}
+.demos{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.demos .btn{min-height:46px;display:flex;align-items:center;justify-content:center;text-align:center}
+.nut{margin-top:var(--gap);animation:rise .5s both}
+.nut .nhead{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.nut .nhead>div:last-child{min-width:0;flex:1}
+.nhead .dish{width:64px;height:64px;animation:none}.nhead h2,.nhead h3{margin-bottom:6px}
+.det{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:10px;margin:18px 0}
+.det>div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center}
+.det b{display:block;font:700 1.25rem 'Bricolage Grotesque',system-ui,sans-serif;line-height:1.2}
+.det span{display:block;margin-top:2px;font-size:.75rem;color:var(--mute)}
+.det .ok b{color:var(--teal)}.det .no b{color:#b3261e}
+.nbody{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin:20px 0}.nbody>div:last-child{flex:1;min-width:220px}
+.ring{position:relative;width:130px;height:130px;flex:none}.ring svg{transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:10;stroke-linecap:round}
+.ring b{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font:700 1.6rem 'Bricolage Grotesque',system-ui,sans-serif}.ring small{font:400 .7rem 'Instrument Sans',system-ui,sans-serif;color:var(--mute)}
+.mac{margin-bottom:12px;font-size:.88rem;display:grid;grid-template-columns:1fr auto;gap:0 10px}.mac .bar{grid-column:1/-1}
+
+/* admin QR codes */
+#qrs{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+#qrs .card{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+#qrs .q{display:grid;place-items:center;width:132px;height:132px;padding:6px;margin:6px 0;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#qrs .q img,#qrs .q canvas{display:block;width:120px!important;height:120px!important}
+#qrs .q canvas{display:none}
+
+#qrs .card>img,#qrs .card>.ph,#qrs .card>.dish{display:none}
+
+/* payment sheet */
+.ov{position:fixed;inset:0;background:rgba(9,61,55,.55);display:grid;place-items:center;z-index:20;animation:fade .2s;padding:12px}
+.sheet{background:#fff;border-radius:20px;padding:22px;width:min(420px,100%);max-height:94vh;overflow:auto;animation:rise .35s}
+.sheet .nhead{margin-bottom:6px;display:flex;gap:14px;align-items:center}
+.qty{display:flex;align-items:center;gap:12px}.qty b{min-width:1.4em;text-align:center}.qty button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:1.1rem}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;margin-top:10px;border:1.5px solid var(--line);border-radius:12px;background:#fff;transition:all .2s}.opt.on{border-color:var(--teal);background:var(--mint)}
+.opt small{color:var(--mute)}
+#toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,90px);background:var(--deep);color:#fff;padding:12px 20px;border-radius:12px;transition:transform .35s;z-index:30;max-width:90vw;text-align:center}#toast.show{transform:translate(-50%,0)}
+
+/* small screens */
+@media(max-width:900px){.cols{grid-template-columns:1fr}.scanwrap{grid-template-columns:1fr}.scanner{max-width:360px}}
+@media(max-width:760px){
+ #login{grid-template-columns:1fr}.hero{padding-top:28px}.stage{transform:scale(.85);margin:10px 0 0}.float-field{--n:1;min-height:480px}
+ #app{grid-template-columns:1fr}
+ aside{position:static;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:10px;gap:6px}
+ .brand,.me{display:none}aside button{white-space:nowrap;width:auto;flex:none}aside button:hover{padding-left:12px}#out{margin:0}
+ main{padding:20px 16px 40px}.pagehead h1{font-size:1.6rem}.fgrid .wide{grid-column:auto}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.arm{transform:rotate(var(--a,0deg))}.sat{transform:rotate(calc(-1*var(--a,0deg)))}}
+</style>
+</head>
+<body>
+<section id="login">
+  <div class="hero">
+    <h1>Today's menu, fresh from the kitchen</h1>
+    <div class="showcase"><div class="stage" id="stage"><div class="plate" id="plate"></div></div><div class="dn" id="dn"></div></div>
+    <div class="tick"><div id="tk"></div></div>
+    <div class="float-field" id="fl"></div>
+  </div>
+  <div class="form">
+    <form id="lf">
+      <div class="logo">SC</div>
+      <h2>Sign in to SmartCanteen</h2>
+      <p class="sub">Order, pay and track your food.</p>
+      <label for="em">College email</label><input id="em" type="email" required autocomplete="username">
+      <label for="pw">Password</label><input id="pw" type="password" required autocomplete="current-password">
+      <div class="err" id="le" role="alert"></div>
+      <button class="btn full" style="margin-top:6px">Sign in</button>
+      <p class="hint"><b>Student:</b> student@canteen.edu / student123<br><b>Admin:</b> admin@canteen.edu / admin123</p>
+    </form>
+  </div>
+</section>
+<div id="app" class="hide"><aside><div class="brand"><span class="logo">SC</span>SmartCanteen</div><nav id="nav" style="display:contents"></nav><div class="me" id="me"></div><button id="out">Sign out</button></aside><main id="main"></main></div>
+<div id="toast" role="status"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rupee=n=>'₹'+Number(n).toLocaleString('en-IN');
+const ini=n=>String(n||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+/* food photo; initials show only until a photo exists */
+const pic=i=>`<span class="ini">${esc(ini(i.name))}</span>`+(i.image?`<img src="${esc(i.image)}" alt="${esc(i.name||'')}" onerror="this.remove()">`:'');
+const S={get:k=>{try{return sessionStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch{}},clear:()=>{try{sessionStorage.clear()}catch{}}};
+let T=S.get('t'),U=JSON.parse(S.get('u')||'null'),LIVE=null;
+
+/* demo data, used only when the Flask server is not running */
+const DB={menu:[[1,'Misal Pav','Breakfast',50,80,420,14,58,15,9,'Sprouted moth beans, spicy curry, farsan, pav',83],[2,'Vada Pav','Snacks',25,60,290,7,41,11,3,'Potato fritter, pav, garlic chutney',72],[3,'Poha','Breakfast',30,50,250,6,42,6,3,'Flattened rice, peanuts, onion, turmeric',47],[4,'Veg Biryani','Lunch',90,40,450,10,70,13,4,'Basmati rice, vegetables, saffron, spices',58],[5,'Masala Dosa','Lunch',60,40,380,8,55,14,4,'Rice-lentil batter, spiced potato, chutney',50],[6,'Dal Tadka Rice','Lunch',70,40,390,13,62,8,7,'Toor dal, rice, ghee tadka, cumin',62]].map(([id,name,category,price,stock,cal,protein,carbs,fat,fiber,ingredients,pred])=>({id,name,category,price,stock,cal,protein,carbs,fat,fiber,ingredients,pred,image:'/img/'+name.toLowerCase().replace(/ /g,'-')+'.jpg'})),orders:[{id:100,name:'Veg Biryani',item:'Veg Biryani',student:'Aman',qty:1,total:90,created:'2026-10-02T12:10:00',method:'cash',status:'unpaid',txn:''}],ratings:[{item_id:1,stars:5,comment:'Very tasty',student:'Shweta',created:''},{item_id:4,stars:4,comment:'Needs more raita',student:'Aman',created:''}],nid:7,oid:101};
+const tot=()=>DB.menu.reduce((a,i)=>a+i.pred,0);
+async function mock(p,o){
+ const b=o.body||{},m=o.method||'GET';await new Promise(r=>setTimeout(r,120));
+ if(p==='/login'){const a=b.email==='admin@canteen.edu'&&b.password==='admin123',s=b.email==='student@canteen.edu'&&b.password==='student123';if(!a&&!s)throw new Error('Wrong email or password.');return{token:'x',user:{id:a?1:2,name:a?'Canteen Admin':'Shweta',role:a?'admin':'student'}}}
+ if(p==='/menu'&&m==='GET')return DB.menu.map(i=>{const r=DB.ratings.filter(x=>x.item_id==i.id);return{...i,rating:r.length?+(r.reduce((a,x)=>a+x.stars,0)/r.length).toFixed(1):null}});
+ if(p==='/menu'&&m==='POST'){if(!b.name||b.price==='')throw new Error('Enter a name, a price and a stock number.');DB.menu.push({id:DB.nid++,name:b.name,category:b.category,price:+b.price,stock:+b.stock,cal:+b.cal||0,protein:+b.protein||0,carbs:+b.carbs||0,fat:+b.fat||0,fiber:0,ingredients:b.ingredients||'',pred:30,image:''});return{ok:1}}
+ if(p==='/public/menu')return DB.menu;
+ if(p==='/admin/orders')return DB.orders;
+ if(/^\/admin\/orders\/\d+\/paid$/.test(p)){DB.orders.find(x=>x.id==p.split('/')[3]).status='paid';return{ok:1}}
+ if(/^\/menu\/\d+\/image$/.test(p)){DB.menu.find(x=>x.id==p.split('/')[2]).image=b.data;return{ok:1}}
+ if(p.startsWith('/menu/')){DB.menu=DB.menu.filter(i=>i.id!=p.split('/')[2]);return{ok:1}}
+ if(p==='/orders'&&m==='POST'){const i=DB.menu.find(x=>x.id==b.item_id),q=+b.qty||1;if(i.stock<q)throw new Error('Only '+i.stock+' left of '+i.name+'.');if(b.method!=='cash'&&b.method!=='phonepe')throw new Error('Choose a payment method.');i.stock-=q;const id=DB.oid++,pp=b.method==='phonepe',status=pp?'pending':'unpaid';DB.orders.unshift({id,name:i.name,item:i.name,student:'Shweta',qty:q,total:q*i.price,created:new Date().toISOString().slice(0,19),method:b.method,status,txn:''});const r={ok:1,id,total:q*i.price,status,txn:''};if(pp)r.pay={vpa:'yourname@ybl',name:'SmartCanteen',note:'SmartCanteen order '+id};return r}
+ if(/^\/orders\/\d+\/confirm$/.test(p)){const o=DB.orders.find(x=>x.id==p.split('/')[2]),u=String(b.utr||'').replace(/\s/g,'');if(!/^\d{12}$/.test(u))throw new Error('Enter the 12-digit UTR (reference number) shown in PhonePe.');o.status='paid';o.txn=u;return{ok:1,id:o.id,total:o.total,status:'paid',txn:u}}
+ if(/^\/orders\/\d+\/cancel$/.test(p)){const o=DB.orders.find(x=>x.id==p.split('/')[2]);o.status='cancelled';DB.menu.find(i=>i.name===o.item).stock+=o.qty;return{ok:1}}
+ if(p==='/orders')return DB.orders.filter(x=>x.student==='Shweta');
+ if(p==='/ratings'){if(!b.stars)throw new Error('Pick 1 to 5 stars.');DB.ratings.push({item_id:b.item_id,stars:b.stars,comment:b.comment,student:'Shweta',created:''});return{ok:1}}
+ if(p==='/feedback')return DB.ratings.map(r=>({...r,item:DB.menu.find(i=>i.id==r.item_id)?.name||'Item'})).reverse();
+ if(p==='/upload')return{imported:7,skipped:0};
+ if(p==='/predict')return{date:'tomorrow',items:DB.menu.map(i=>({id:i.id,name:i.name,predicted:i.pred,prepare:Math.ceil(i.pred*1.1),confidence:86+i.id%9,stock:i.stock})).sort((a,b)=>b.predicted-a.predicted)};
+ if(p==='/predict/apply'){DB.menu.forEach(i=>i.stock=Math.ceil(i.pred*1.1));return{ok:1}}
+ if(p==='/stats')return{students:1248,orders:DB.orders.length+186,sales:8450+DB.orders.reduce((a,x)=>a+x.total,0),predicted:tot()};
+ if(p==='/analytics'){const c={};DB.menu.forEach(i=>c[i.category]=(c[i.category]||0)+i.pred*i.price*30);
+  return{daily:[...Array(14)].map((_,i)=>{const q=Math.round(tot()*(.85+.25*Math.sin(i/2)+(i%7==4?.15:0)));return{date:'D'+(i+1),q,rev:q*52}}),categories:Object.entries(c).map(([c,rev])=>({c,rev})),weekday:[.95,1.1,1,1.02,1.2,.8,.5].map(k=>Math.round(tot()*k))}}
+}
+async function api(p,o={}){
+ if(LIVE!==false){
+  let r=null;
+  try{r=await fetch('/api'+p,{method:o.method||'GET',headers:{'Content-Type':'application/json',...(T?{Authorization:'Bearer '+T}:{})},body:o.body?JSON.stringify(o.body):undefined})}catch(e){if(LIVE)throw new Error('Cannot reach the server. Start it with: python app.py')}
+  if(r&&(r.headers.get('content-type')||'').includes('json')){LIVE=true;const d=await r.json();if(!r.ok){if(r.status===401&&T&&p!=='/login')signOut();throw new Error(d.error||'Something went wrong.')}return d}
+  LIVE=false;
+ }
+ return mock(p,o);
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t.h);t.h=setTimeout(()=>t.classList.remove('show'),2600)}
+function signOut(){stopCam();S.clear();T=U=null;$('#app').classList.add('hide');$('#login').classList.remove('hide')}
+$('#out').onclick=signOut;
+
+/* login showcase: today's menu */
+(async function(){
+ let D;try{D=await api('/public/menu')}catch{D=DB.menu}if(!D.length)return;let k=0;
+ const sats=D.slice(0,8);
+ const ff=$('#fl'),tile=(d,i)=>`<div class="fl" title="${esc(d.name)}">${pic(d)}${i<2?`<video src="/video/food${i+1}.mp4" autoplay muted loop playsinline onerror="this.remove()"></video>`:''}<small><b>${esc(d.name)}</b> · ${rupee(d.price)}</small></div>`;
+ const rows=[D.slice(0,6),D.slice(0,6).reverse()];
+ ff.innerHTML=rows.map(r=>`<div class="row"><div class="track">${r.map(tile).join('')}</div></div>`).join('');
+ const play=t=>t.querySelectorAll('video').forEach(v=>{v.muted=true;v.play().catch(()=>{})});
+ const slide=(t,dir)=>{const E='transform .8s cubic-bezier(.65,0,.35,1)';
+  const w=t.firstElementChild.getBoundingClientRect().width+14;
+  if(dir<0){t.style.transition=E;t.style.transform=`translateX(${-w}px)`;
+   t.addEventListener('transitionend',()=>{t.style.transition='none';t.appendChild(t.firstElementChild);t.style.transform='none';play(t)},{once:true})}
+  else{t.style.transition='none';t.insertBefore(t.lastElementChild,t.firstElementChild);t.style.transform=`translateX(${-w}px)`;t.offsetWidth;t.style.transition=E;t.style.transform='none';setTimeout(()=>play(t),850)}};
+ ff.querySelectorAll('.track').forEach(play);
+ if(!matchMedia('(prefers-reduced-motion:reduce)').matches)ff.querySelectorAll('.track').forEach((t,i)=>setTimeout(()=>setInterval(()=>slide(t,i?1:-1),2800),i*1400+1200));
+ $('#stage').insertAdjacentHTML('afterbegin',sats.map((d,i,a)=>{const dl=(-i*30/a.length).toFixed(2);return `<div class="arm" style="--dl:${dl}s;--a:${(360/a.length*i).toFixed(1)}deg"><div class="sat" style="--dl:${dl}s">${pic(d)}</div></div>`}).join(''));
+ $('#tk').innerHTML=[...D,...D].map(d=>`<span>${esc(d.name)} · ${rupee(d.price)} · ${d.cal} kcal</span>`).join('');
+ (function show(){const d=D[k++%D.length];$('#plate').innerHTML=pic(d);
+  $('#dn').innerHTML=`<b>${esc(d.name)}</b><small>${rupee(d.price)} · ${d.cal} kcal · ${d.protein} g protein</small>`;
+  setTimeout(show,3000)})();
+})();
+$('#lf').onsubmit=async e=>{e.preventDefault();$('#le').textContent='';
+ try{const d=await api('/login',{method:'POST',body:{email:$('#em').value,password:$('#pw').value}});T=d.token;U=d.user;S.set('t',T);S.set('u',JSON.stringify(U));start()}catch(x){$('#le').textContent=x.message}};
+
+/* shell + animation helper */
+const VIEWS={
+ student:{menu:["Today's menu",vMenu,'Fresh meals from the canteen kitchen. Choose a dish and order ahead.'],scan:['Scan food',vScan,'Scan the QR code at the counter to see price, availability, calories, fat, protein and ingredients.'],orders:['My orders',vOrders,'Your recent orders and their payment status.'],rate:['Rate food',vRate,'Tell us how the food was. Your rating helps the kitchen.']},
+ admin:{dash:['Dashboard',vDash,"Today's numbers and tomorrow's forecast."],ord:['Orders',vOrd,'Cash orders stay unpaid until you confirm the money at the counter.'],ana:['Analytics',vAna,'Revenue and demand patterns from your sales history.'],pred:['Demand prediction',vPred,'Tomorrow\'s forecast from the weekday pattern and sales trend.'],amenu:['Menu',vAdminMenu,'Add dishes, upload photos and manage stock.'],qr:['QR codes',vQr,'Print these and place one at each counter. Students scan them to see price, nutrition and availability.'],scan:['Scan food',vScan,'Scan a food QR code to see its availability, fat, protein, carbs, calories and price.'],data:['Upload data',vData,'Import past sales so the forecast becomes more accurate.'],fb:['Feedback',vFb,'Ratings and comments from students.']}
+};
+function start(){
+ $('#login').classList.add('hide');$('#app').classList.remove('hide');
+ $('#me').innerHTML=`<b>${esc(U.name)}</b>${U.role==='admin'?'Administrator':'Student'}<br>${LIVE?'Connected to database':'Preview mode · demo data'}`;
+ const v=VIEWS[U.role];$('#nav').innerHTML=Object.entries(v).map(([k,x])=>`<button data-k="${k}">${x[0]}</button>`).join('');
+ $('#nav').onclick=e=>{if(e.target.dataset.k)go(e.target.dataset.k)};go(Object.keys(v)[0]);
+}
+async function go(k){
+ stopCam();document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+ const [title,fn,sub]=VIEWS[U.role][k],head=`<header class="pagehead"><h1>${title}</h1><p class="sub">${sub}</p></header>`;
+ try{$('#main').innerHTML=head+await fn()}catch(x){$('#main').innerHTML=head+`<p class="err">${esc(x.message)}</p>`}
+ document.querySelectorAll('.grid>*').forEach((e,i)=>e.style.setProperty('--n',i));window.scrollTo(0,0);play();
+}
+function play(){requestAnimationFrame(()=>requestAnimationFrame(()=>{
+ const q=(s,f)=>document.querySelectorAll(s).forEach(f);
+ q('[data-w]',e=>e.style.width=e.dataset.w+'%');q('[data-h]',e=>e.style.height=e.dataset.h+'%');
+ q('[data-d]',e=>e.style.strokeDasharray=e.dataset.d);q('[data-off]',e=>e.style.strokeDashoffset=e.dataset.off);q('.draw',e=>e.classList.add('on'));
+ q('[data-count]',e=>{const n=+e.dataset.count,pre=e.dataset.pre||'',t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/1100);e.textContent=pre+Math.round(n*(1-Math.pow(1-k,3))).toLocaleString('en-IN');if(k<1)requestAnimationFrame(f)})(t0)});
+ q('.q[data-id]',e=>{const t=e.dataset.url?decodeURIComponent(e.dataset.url):'SC-'+e.dataset.id;if(window.QRCode&&!e.firstChild)new QRCode(e,{text:t,width:240,height:240,colorDark:'#0e5a52',correctLevel:QRCode.CorrectLevel.L});else if(!window.QRCode)e.textContent=t})
+}))}
+
+/* student */
+const tagOf=i=>i.cal<300?'Light':i.protein>=12?'High protein':'Balanced';
+async function vMenu(){
+ const m=await api('/menu');
+ window.MENU=m;window.order=openPay;
+ window.pick=g=>{const s={light:i=>-i.cal,protein:i=>i.protein/i.cal,bal:i=>-Math.abs(i.cal-400)};const best=[...m].filter(i=>i.stock>0).sort((a,b)=>s[g](b)-s[g](a))[0];toast(best?`Smart pick: ${best.name}`:'Everything is sold out');
+  document.querySelectorAll('.card[data-id]').forEach(c=>c.style.outline=best&&c.dataset.id==best.id?'3px solid var(--amber)':'')};
+ return `<div class="card" style="margin-bottom:var(--gap)"><div class="pickbar"><div><label for="goal">I want a meal that is</label><select id="goal" onchange="pick(this.value)"><option value="bal">Balanced</option><option value="light">Light</option><option value="protein">High in protein</option></select></div><button class="btn go" onclick="pick($('#goal').value)">Smart pick</button></div></div>
+ <div class="grid">`+m.map(i=>`<div class="card food" data-id="${i.id}"><div class="ph">${pic(i)}</div><div class="tags"><span class="tag">${esc(i.category)}</span><span class="tag am">${tagOf(i)}</span></div><h3>${esc(i.name)}</h3>
+  <div class="facts"><span><b>${i.cal}</b> kcal</span><span>${i.rating==null?'New':'★ <b>'+i.rating+'</b>'}</span><span><b>${i.stock}</b> left</span></div>
+  <div class="buy"><span class="price">${rupee(i.price)}</span><button class="btn" ${i.stock<1?'disabled':''} onclick="order(${i.id})">${i.stock<1?'Sold out':'Order now'}</button></div></div>`).join('')+'</div>';
+}
+function nutri(i){
+ const M=[['Protein',i.protein,50],['Carbs',i.carbs,275],['Fat',i.fat,78],['Fiber',i.fiber,28]];
+ const ok=i.stock>0;
+ return `<div class="card nut"><div class="nhead"><div class="dish">${pic(i)}</div>
+  <div><h2>${esc(i.name)}</h2><span class="tag">${esc(i.category)}</span> <span class="tag am">${tagOf(i)}</span>${i.rating?` <span class="tag">★ ${i.rating}</span>`:''}</div></div>
+ <div class="det">
+  <div><b>${rupee(i.price)}</b><span>Price</span></div>
+  <div class="${ok?'ok':'no'}"><b>${ok?'Available':'Sold out'}</b><span>${ok?i.stock+' left':'Not in stock'}</span></div>
+  <div><b>${i.cal}</b><span>Calories (kcal)</span></div>
+  <div><b>${i.protein} g</b><span>Protein</span></div>
+  <div><b>${i.carbs} g</b><span>Carbs</span></div>
+  <div><b>${i.fat} g</b><span>Fat</span></div>
+  <div><b>${i.fiber} g</b><span>Fiber</span></div>
+ </div>
+ <div class="nbody"><div class="ring"><svg width="130" height="130" viewBox="0 0 130 130"><circle cx="65" cy="65" r="55" stroke="var(--mint)"/><circle cx="65" cy="65" r="55" stroke="var(--teal)" style="stroke-dasharray:346;stroke-dashoffset:346;transition:stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1)" data-off="${346*(1-Math.min(1,i.cal/2000))}"/></svg><b><span data-count="${i.cal}">0</span><small>kcal · ${Math.round(i.cal/20)}% of day</small></b></div>
+ <div>${M.map(([n,v,dv])=>`<div class="mac"><span>${n}</span><b>${v} g</b><div class="bar"><i data-w="${Math.min(100,v/dv*100)}"></i></div></div>`).join('')}</div></div>
+ <div style="margin:0 0 10px"><b>Ingredients</b><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${(i.ingredients||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>`<span class="tag">${esc(x)}</span>`).join('')||'<span class="sub" style="margin:0">Not listed</span>'}</div></div>
+ <p class="sub" style="font-size:.75rem;margin-bottom:14px">Per serving. Percentages are against a 2000 kcal daily diet.</p>
+ ${U.role==='student'?`<button class="btn" ${ok?'':'disabled'} onclick="order(${i.id})">${ok?'Order this':'Sold out'}</button>`:''}</div>`;
+}
+let stream=null;function stopCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null}
+async function vScan(){
+ const m=await api('/menu');
+ window.showItem=id=>{stopCam();const i=m.find(x=>x.id==id);if(!i)return toast('This QR code is not a canteen item.');$('#scanOut').innerHTML=nutri(i);play();$('#scanOut').scrollIntoView({behavior:'smooth'})};
+ window.MENU=m;window.order=openPay;
+ window.camOn=async()=>{
+  if(!window.jsQR||!navigator.mediaDevices)return toast('Camera is not available here. Use a demo scan.');
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})}catch{return toast('Allow camera access to scan, or use a demo scan.')}
+  const v=$('#cam');v.srcObject=stream;await v.play();const c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});
+  (function tick(){if(!stream)return;if(v.videoWidth){c.width=v.videoWidth;c.height=v.videoHeight;x.drawImage(v,0,0);const q=jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height),r=q&&/SC-(\d+)|\/item\/(\d+)/.exec(q.data);if(r){$('#scanner').classList.add('hit');return showItem(r[1]||r[2])}}requestAnimationFrame(tick)})();
+ };
+ window.demo=id=>{$('#scanner').classList.add('hit');setTimeout(()=>{$('#scanner').classList.remove('hit');showItem(id)},900)};
+ return `<div class="scanwrap"><div><div class="scanner" id="scanner"><video id="cam" playsinline muted></video><i></i><i></i><i></i><i></i></div><button class="btn full" onclick="camOn()">Start camera</button></div>
+ <div class="card"><h3>No camera? Try a demo scan</h3><p class="sub" style="margin:6px 0 14px">Tap a dish to see its price, availability and nutrition details.</p><div class="demos">${m.map(i=>`<button class="btn ghost" onclick="demo(${i.id})">${esc(i.name)}</button>`).join('')}</div></div></div><div id="scanOut"></div>`;
+}
+async function vOrders(){const o=await api('/orders');
+ return `<div class="card">`+(o.length?o.map(x=>`<div class="row"><span><b>#${x.id} ${esc(x.name)}</b> × ${x.qty}<br><small class="sub">${esc(x.created.replace('T',' '))}</small></span><span style="text-align:right"><b>${rupee(x.total)}</b><br>${stag(x)}</span></div>`).join(''):'<p class="sub" style="margin:0">No orders yet. Order from today\'s menu or scan a dish.</p>')+'</div>'}
+async function vRate(){
+ const m=await api('/menu');let st=0;
+ window.setStar=n=>{st=n;document.querySelectorAll('.stars button').forEach((b,i)=>b.classList.toggle('on',i<n))};
+ window.sendRate=async()=>{try{await api('/ratings',{method:'POST',body:{item_id:$('#ri').value,stars:st,comment:$('#rc').value}});toast('Thanks for your feedback');go('rate')}catch(x){toast(x.message)}};
+ return `<div class="card" style="max-width:480px"><label for="ri" style="margin-top:0">Food item</label><select id="ri">${m.map(i=>`<option value="${i.id}">${esc(i.name)}</option>`).join('')}</select>
+ <label>Your rating</label><div class="stars">${[1,2,3,4,5].map(n=>`<button aria-label="${n} stars" onclick="setStar(${n})">★</button>`).join('')}</div>
+ <label for="rc">Comment (optional)</label><input id="rc" maxlength="300"><button class="btn full" onclick="sendRate()">Submit rating</button></div>`;
+}
+
+/* admin */
+function line(v){const w=520,h=140,mx=Math.max(...v)*1.1,d=v.map((x,i)=>(i?'L':'M')+(i*w/(v.length-1)).toFixed(1)+' '+(h-x/mx*h).toFixed(1)).join(' ');
+ return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${d} L${w} ${h} L0 ${h}Z" fill="var(--mint)" opacity=".7"/><path class="draw" pathLength="1" d="${d}" fill="none" stroke="var(--teal)" stroke-width="3" stroke-linecap="round"/></svg>`}
+async function vDash(){
+ const [s,p,a]=await Promise.all([api('/stats'),api('/predict'),api('/analytics')]);const mx=Math.max(1,...p.items.map(i=>i.predicted));
+ return `<div class="grid">${[['Students',s.students,''],['Orders today',s.orders,''],['Sales today',s.sales,'₹'],['Predicted for tomorrow',s.predicted,'']].map(([l,v,pre])=>`<div class="card stat"><span class="sub" style="margin:0">${l}</span><b data-count="${v}" data-pre="${pre}">0</b></div>`).join('')}</div>
+ <div class="cols"><div class="card"><h3>Sales, last 14 days</h3>${line(a.daily.map(d=>d.rev))}</div><div class="card"><h3>Tomorrow's top dishes</h3>${p.items.slice(0,5).map(i=>`<div style="margin-top:12px">${esc(i.name)} <b style="float:right">${i.predicted}</b><div class="bar"><i data-w="${i.predicted/mx*100}"></i></div></div>`).join('')}</div></div>`;
+}
+async function vAna(){
+ const a=await api('/analytics'),tt=a.categories.reduce((x,c)=>x+c.rev,0)||1,col=['#0e5a52','#f2a93b','#2a9d8f','#9bc9bf'],mx=Math.max(...a.weekday,1);let off=0;
+ window.exportCsv=async()=>{try{let t;if(LIVE){const r=await fetch('/api/export',{headers:{Authorization:'Bearer '+T}});t=await r.text()}else t='Date,Food Item,Category,Quantity,Price,Revenue,Weekday\n'+DB.menu.map(i=>`2026-10-01,${i.name},${i.category},${i.pred},${i.price},${i.pred*i.price},Thursday`).join('\n');
+  const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));l.download='smartcanteen_powerbi.csv';l.click();toast('Exported for Power BI')}catch{toast('Export failed. Check the server.')}};
+ return `<div class="cols" style="margin-top:0"><div class="card"><h3>Revenue by category</h3><svg viewBox="0 0 42 42" style="width:170px;display:block;margin:10px auto 14px"><g transform="rotate(-90 21 21)">${a.categories.map((c,i)=>{const p=c.rev/tt*100,e=`<circle cx="21" cy="21" r="15.9155" fill="none" stroke="${col[i%4]}" stroke-width="6" pathLength="100" style="stroke-dasharray:0 100;stroke-dashoffset:${-off};transition:stroke-dasharray 1.2s ${i*.2}s" data-d="${p} ${100-p}"/>`;off+=p;return e}).join('')}</g></svg>
+ ${a.categories.map((c,i)=>`<div class="row"><span><span style="color:${col[i%4]}">●</span> ${esc(c.c)}</span><b>${Math.round(c.rev/tt*100)}%</b></div>`).join('')}</div>
+ <div class="card"><h3>Average demand by weekday</h3><div class="vb" style="margin-top:14px">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<div><i data-h="${a.weekday[i]/mx*85}"></i>${d}</div>`).join('')}</div></div></div>
+ <div class="card" style="margin-top:var(--gap)"><h3>Power BI</h3><p class="sub">Download one flat table, then in Power BI choose Get data, Text/CSV and build your report.</p><button class="btn" onclick="exportCsv()">Export for Power BI</button></div>`;
+}
+async function vPred(){
+ const p=await api('/predict');window.apply=async()=>{await api('/predict/apply',{method:'POST'});toast('Stock updated to the prepare amounts');go('pred')};
+ return `<div class="card"><div class="cardhead"><h3>Forecast for ${esc(p.date)}</h3><button class="btn" onclick="apply()">Apply prepare amounts to stock</button></div>${p.items.map(i=>`<div class="row"><span><b>${esc(i.name)}</b><br><small class="sub">${i.confidence}% confidence · stock now ${i.stock}</small><div class="bar" style="width:160px"><i data-w="${i.confidence}"></i></div></span><span style="text-align:right">Predicted <b>${i.predicted}</b><br>Prepare <b style="color:var(--teal)">${i.prepare}</b></span></div>`).join('')}</div>`;
+}
+const shrink=f=>new Promise((ok,no)=>{const fr=new FileReader();fr.onerror=()=>no(new Error('Could not read that file.'));fr.onload=()=>{const im=new Image();im.onerror=()=>no(new Error('That file is not a valid image.'));im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.85))};im.src=fr.result};fr.readAsDataURL(f)});
+async function vAdminMenu(){
+ const m=await api('/menu');
+ window.addItem=async()=>{try{
+  await api('/menu',{method:'POST',body:Object.fromEntries(['name','category','price','stock','cal','protein','carbs','fat','ingredients'].map(k=>[k,$('#a_'+k).value]))});
+  const ph=$('#a_photo').files[0];
+  if(ph){const d=await shrink(ph),l=await api('/menu'),it=l.filter(x=>x.name===$('#a_name').value.trim()).pop();if(it)await api('/menu/'+it.id+'/image',{method:'POST',body:{data:d}})}
+  toast('Item added');go('amenu')}catch(x){toast(x.message)}};
+ window.delItem=async id=>{if(confirm('Remove this item?')){await api('/menu/'+id,{method:'DELETE'});go('amenu')}};
+ window.upPhoto=id=>{const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=async()=>{if(!f.files[0])return;try{await api('/menu/'+id+'/image',{method:'POST',body:{data:await shrink(f.files[0])}});toast('Photo saved');go('amenu')}catch(x){toast(x.message)}};f.click()};
+ const f=(k,l,t='text')=>`<div><label for="a_${k}">${l}</label><input id="a_${k}" type="${t}" ${t==='number'?'min="0"':''}></div>`;
+ return `<div class="card"><h3>Add a new dish</h3><div class="fgrid">${f('name','Name')}<div><label for="a_category">Category</label><select id="a_category"><option>Breakfast</option><option>Lunch</option><option>Snacks</option><option>Drinks</option></select></div>${f('price','Price (₹)','number')}${f('stock','Stock','number')}${f('cal','Calories (kcal)','number')}${f('protein','Protein (g)','number')}${f('carbs','Carbs (g)','number')}${f('fat','Fat (g)','number')}<div class="wide"><label for="a_ingredients">Ingredients (comma separated)</label><input id="a_ingredients" type="text" maxlength="200"></div><div class="wide"><label for="a_photo">Food photo</label><input id="a_photo" type="file" accept="image/*"></div><button class="btn go" onclick="addItem()">Add food</button></div></div>
+ <div class="card" style="margin-top:var(--gap)"><h3 style="margin-bottom:6px">All dishes (${m.length})</h3>${m.map(i=>`<div class="row"><span class="who"><span class="dish">${pic(i)}</span><span><b>${esc(i.name)}</b> <span class="tag">${esc(i.category)}</span><br><small class="sub" style="margin:0">${rupee(i.price)} · ${i.cal} kcal · ${i.stock} in stock</small></span></span><span style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn ghost" onclick="upPhoto(${i.id})">${i.image?'Change photo':'Upload photo'}</button><button class="btn ghost" onclick="delItem(${i.id})">Remove</button></span></div>`).join('')}</div>`;
+}
+const qrText=i=>`${i.name} (${i.category}) - Rs ${i.price}\nAvailability: ${i.stock>0?'Available ('+i.stock+' left)':'Sold out'}\nProtein: ${i.protein} g\nFat: ${i.fat} g\nCarbs: ${i.carbs} g\nFiber: ${i.fiber} g\nCalories: ${i.cal} kcal${i.ingredients?'\nIngredients: '+i.ingredients:''}\nSC-${i.id}`;
+async function vQr(){
+ const m=await api('/menu');
+ const TX={};if(LIVE){try{(await api('/qr-data')).items.forEach(t=>TX[t.id]=t.text)}catch{}}
+ return `<div class="grid" id="qrs">${m.map(i=>`<div class="card"><b>${esc(i.name)}</b>
+  <div class="q" data-id="${i.id}" data-url="${encodeURIComponent(TX[i.id]||qrText(i))}"></div>
+  <small class="sub" style="margin:0">${rupee(i.price)} · ${i.stock>0?i.stock+' left':'Sold out'}</small></div>`).join('')}</div>`}
+async function vData(){
+ window.sendCsv=async()=>{const f=$('#cf').files[0];if(!f)return toast('Choose a CSV file first');try{const r=await api('/upload',{method:'POST',body:{csv:await f.text()}});toast(`${r.imported} rows imported, ${r.skipped} skipped`)}catch(x){toast(x.message)}};
+ return `<div class="card" style="max-width:540px"><h3>Import sales history</h3><p class="sub">Columns: Date (YYYY-MM-DD), Food Item, Quantity Sold, Price. Your earlier sample file works as is.</p><input id="cf" type="file" accept=".csv"><button class="btn full" onclick="sendCsv()">Import data</button></div>`;
+}
+async function vFb(){const f=await api('/feedback');
+ return `<div class="card">`+(f.length?f.map(x=>`<div class="row"><span><b>${esc(x.item)}</b> · <span style="color:var(--amber)">${'★'.repeat(x.stars)}</span><br><small class="sub" style="margin:0">${esc(x.student)}: ${esc(x.comment||'No comment')}</small></span></div>`).join(''):'<p class="sub" style="margin:0">No feedback yet. Student ratings appear here.</p>')+'</div>'}
+
+/* payment: Cash or PhonePe (matches app.py) */
+const stag=x=>{const s=x.status,l={paid:x.method==='cash'?'Paid · Cash':'Paid · PhonePe',unpaid:'Pay at counter',pending:'Awaiting payment',cancelled:'Cancelled'}[s]||s;return `<span class="tag ${s==='paid'?'':'am'}">${esc(l)}</span>`};
+function openPay(id){
+ const i=MENU.find(x=>x.id==id);if(!i)return;let q=1,meth='cash';
+ const o=document.createElement('div');o.className='ov';document.body.appendChild(o);const close=()=>o.remove();o.onclick=e=>{if(e.target===o)close()};
+ const done=r=>{o.innerHTML=`<div class="sheet" style="text-align:center"><svg width="90" height="90" viewBox="0 0 90 90"><circle class="draw" pathLength="1" cx="45" cy="45" r="40" fill="none" stroke="#0e5a52" stroke-width="5"/><path class="draw" pathLength="1" d="M27 46l12 12 24-26" fill="none" stroke="#0e5a52" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h2>Order placed</h2><p class="sub">Token <b style="color:var(--teal);font-size:1.5rem">#${r.id}</b><br>${meth==='phonepe'?`Paid ${rupee(r.total)} via PhonePe · ${esc(r.txn)}`:`Pay ${rupee(r.total)} in cash at the counter`}</p><button class="btn full" id="dn2">View my orders</button></div>`;
+  play();$('#dn2').onclick=()=>{close();go('orders')}};
+ const wait=r=>{const p=r.pay,qs=`pa=${encodeURIComponent(p.vpa)}&pn=${encodeURIComponent(p.name)}&am=${r.total}&cu=INR&tn=${encodeURIComponent(p.note)}&tr=SC${r.id}`,link='phonepe://pay?'+qs;
+  o.innerHTML=`<div class="sheet" style="text-align:center"><h3>Pay ${rupee(r.total)} in PhonePe</h3><p class="sub">PhonePe opens on your phone. After paying, come back here and enter the 12-digit UTR (reference number) shown in PhonePe.</p><a class="btn full" style="display:block;text-decoration:none" href="${esc(link)}">Open PhonePe</a><div id="uq" style="display:grid;place-items:center;margin:14px 0 4px"></div><p class="sub" style="margin:0 0 6px;font-size:.8rem">On a computer, scan this QR with PhonePe.</p><label for="utr" style="text-align:left">UTR / reference number</label><input id="utr" inputmode="numeric" maxlength="12" placeholder="12 digits"><div class="err" id="pe" role="alert"></div><button class="btn full" id="ok" style="margin-top:6px">I have paid</button><button class="btn ghost full" id="cn" style="margin-top:8px">Cancel order</button></div>`;
+  if(window.QRCode)new QRCode($('#uq'),{text:'upi://pay?'+qs,width:130,height:130,colorDark:'#0e5a52'});
+  if(/Android|iPhone|iPad/i.test(navigator.userAgent))setTimeout(()=>{location.href=link},300);
+  $('#ok').onclick=async()=>{try{done(await api('/orders/'+r.id+'/confirm',{method:'POST',body:{utr:$('#utr').value}}))}catch(x){$('#pe').textContent=x.message}};
+  $('#cn').onclick=async()=>{try{await api('/orders/'+r.id+'/cancel',{method:'POST'})}catch{}close();toast('Order cancelled')}};
+ const draw=()=>{const lbl=meth==='cash'?'Place order':'Pay '+rupee(i.price*q)+' with PhonePe';
+  o.innerHTML=`<div class="sheet" role="dialog" aria-label="Payment"><div class="nhead"><div class="dish" style="width:56px;height:56px;animation:none">${pic(i)}</div><div><h3>${esc(i.name)}</h3><span class="sub" style="margin:0">${rupee(i.price)} each</span></div></div>
+  <div class="row"><span>Quantity</span><span class="qty"><button id="qm" aria-label="Fewer">−</button><b>${q}</b><button id="qp" aria-label="More">+</button></span></div>
+  <div class="row"><span>Total</span><b style="font-size:1.3rem;color:var(--teal)">${rupee(i.price*q)}</b></div>
+  <p class="sub" style="margin:14px 0 0">Payment method</p>
+  <button class="opt ${meth==='cash'?'on':''}" data-m="cash"><span style="font-size:1.6rem">💵</span><span><b>Cash</b><br><small>Pay at the counter when you collect</small></span></button>
+  <button class="opt ${meth==='phonepe'?'on':''}" data-m="phonepe"><span style="font-size:1.6rem">📱</span><span><b>PhonePe</b><br><small>PhonePe opens so you can pay now</small></span></button>
+  <div class="err" id="pe" role="alert"></div><button class="btn full" id="go" style="margin-top:6px">${lbl}</button><button class="btn ghost full" id="cl" style="margin-top:8px">Cancel</button></div>`;
+  $('#qm').onclick=()=>{q=Math.max(1,q-1);draw()};$('#qp').onclick=()=>{q=Math.min(10,q+1);draw()};
+  o.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{meth=b.dataset.m;draw()});
+  $('#cl').onclick=close;
+  $('#go').onclick=async()=>{const b=$('#go');b.disabled=true;b.textContent=meth==='phonepe'?'Opening PhonePe…':'Placing order…';
+   try{const r=await api('/orders',{method:'POST',body:{item_id:i.id,qty:q,method:meth}});meth==='phonepe'?wait(r):done(r)}
+   catch(x){$('#pe').textContent=x.message;b.disabled=false;b.textContent=lbl}};
+ };
+ draw();
+}
+async function vOrd(){
+ const o=await api('/admin/orders');
+ window.markPaid=async id=>{await api('/admin/orders/'+id+'/paid',{method:'POST'});toast('Marked as paid');go('ord')};
+ return `<div class="card">`+(o.length?o.map(x=>`<div class="row"><span><b>#${x.id} ${esc(x.item)}</b> × ${x.qty}<br><small class="sub" style="margin:0">${esc(x.student)} · ${rupee(x.total)} · ${x.method==='cash'?'Cash':'PhonePe '+esc(x.txn)}</small></span>${x.status==='unpaid'?`<button class="btn" onclick="markPaid(${x.id})">Mark paid</button>`:stag(x)}</div>`).join(''):'<p class="sub" style="margin:0">No orders yet.</p>')+'</div>'}
+if(T&&U)start();
+</script>
+</body>
+</html>
