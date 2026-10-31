@@ -77,7 +77,7 @@ def now():
 
 @app.get("/")
 def home():
-    return app.send_static_file("index.html")
+    return send_from_directory(app.root_path, "index.html")
 
 @app.post("/api/login")
 def login():
