@@ -1,5 +1,7 @@
 # SmartCanteen: Canteen Demand Prediction System
+# Smart Canteen Management System
 
+🚀 Live Website: https://smart-canteen-app-s0y6.onrender.com
 Stack: HTML/CSS/JS frontend, Python Flask API, SQLite database.
 
 ## Run
